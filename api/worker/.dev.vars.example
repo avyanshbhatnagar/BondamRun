@@ -1,0 +1,3 @@
+# copy to worker/.dev.vars for local development (never commit the real file)
+PEPPER=dev-only-pepper-change-me
+SESSION_SECRET=dev-only-session-secret-change-me

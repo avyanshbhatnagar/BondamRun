@@ -1,0 +1,35 @@
+# Deploys the API to Cloudflare. Run it from the repo's Actions tab ("Run workflow"),
+# or it runs automatically when worker/ or deploy.mjs change on main.
+# Settings it reads (Repo -> Settings -> Secrets and variables -> Actions):
+#   Secrets:   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PEPPER, SESSION_SECRET
+#   Variables: ALLOWED_ORIGINS (e.g. https://<github-user>.github.io), WORKERS_SUBDOMAIN (first deploy only)
+name: Deploy API
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['api/worker/**', 'api/deploy.mjs', '.github/workflows/deploy-api.yml']
+concurrency: deploy-api
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Deploy
+        run: node deploy.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PEPPER: ${{ secrets.PEPPER }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          WORKERS_SUBDOMAIN: ${{ vars.WORKERS_SUBDOMAIN }}

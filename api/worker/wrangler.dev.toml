@@ -1,0 +1,14 @@
+# Local development only (npm run dev). No Cloudflare account needed: D1 is simulated on disk.
+name = "bondam-run-api-dev"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+ALLOWED_ORIGINS = "http://localhost:8080"
+ALLOW_LOCALHOST = "1"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bondam-run-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

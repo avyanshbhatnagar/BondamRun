@@ -1,0 +1,7 @@
+.env
+.deploy-secrets.json
+worker/wrangler.toml
+worker/.dev.vars
+worker/.secrets.upload.json
+worker/.wrangler/
+node_modules/

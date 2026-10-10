@@ -1,0 +1,13 @@
+{
+  "name": "bondam-run-auth",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "node deploy.mjs",
+    "deploy:dry": "node deploy.mjs --dry-run",
+    "dev:setup": "cd worker && npx --yes wrangler@4 d1 migrations apply bondam-run-db --local -c wrangler.dev.toml",
+    "dev": "cd worker && npx --yes wrangler@4 dev -c wrangler.dev.toml --port 8787",
+    "test": "node test/run-tests.mjs"
+  },
+  "engines": { "node": ">=18" }
+}
