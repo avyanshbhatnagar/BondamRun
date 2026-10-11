@@ -153,13 +153,9 @@ function ensureSecrets() {
   const toUpload = {};
   for (const name of wanted) {
     if (existing.includes(name)) { console.log(`   ${name}: already set on Cloudflare - left untouched`); continue; }
-    // Value order: environment (e.g. GitHub secret) > local backup file > freshly generated.
-    // On GitHub Actions the runner is thrown away, so a generated value would be lost for good: demand one instead.
+    // Value order: environment (optional GitHub secret) > local backup file > freshly generated.
     if (process.env[name]) local[name] = process.env[name];
-    if (!local[name]) {
-      if (process.env.GITHUB_ACTIONS) fail(`${name} is not set on Cloudflare yet. Create a GitHub secret named ${name} (value: output of "openssl rand -hex 32"), keep a copy in a password manager, and re-run.`);
-      local[name] = randomBytes(32).toString('hex');
-    }
+    if (!local[name]) local[name] = randomBytes(32).toString('hex');
     toUpload[name] = local[name];
     console.log(`   ${name}: will be created`);
   }
@@ -168,8 +164,9 @@ function ensureSecrets() {
     const tmp = path.join(WORKER_DIR, '.secrets.upload.json');
     writeFileSync(tmp, JSON.stringify(toUpload), { mode: 0o600 });
     try { wrangler(['secret', 'bulk', '.secrets.upload.json']); } finally { try { unlinkSync(tmp); } catch { /* ignore */ } }
-    if (!process.env.GITHUB_ACTIONS) console.log(`   A local copy is in .deploy-secrets.json. KEEP IT SAFE (and out of git):`);
-    console.log(`   if PEPPER is ever lost, every player has to reset their password.`);
+    if (process.env.GITHUB_ACTIONS) console.log(`   Created automatically and stored only on Cloudflare (nobody can read them back, including you).`);
+    else console.log(`   A local copy is in .deploy-secrets.json. KEEP IT SAFE (and out of git):`);
+    console.log(`   If PEPPER is ever deleted or replaced, every player has to reset their password.`);
   }
 }
 
@@ -212,5 +209,10 @@ function ensureSecrets() {
     console.log(ok ? '   ✔ API is up' : '   ⚠ not reachable yet - wait a minute and open the URL in a browser');
   }
 
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    try {
+      writeFileSync(process.env.GITHUB_STEP_SUMMARY, `## API deployed\n\nYour API address: \`${url}\`\n\nPut it in **config.js** in your game repo:\n\n\`\`\`js\nwindow.BONDAM_API = '${url}';\n\`\`\`\n`, { flag: 'a' });
+    } catch { /* summary is optional */ }
+  }
   console.log(`\n✔ Done.\n   API base URL (put this in the game): ${url}\n   Allowed web origins: ${cfg.origins}\n`);
 })().catch((e) => fail(e.message || String(e)));
